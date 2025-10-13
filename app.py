@@ -1,7 +1,10 @@
 from fastmcp import FastMCP
-import psycopg2
 import logging 
- 
+import psycopg
+import urllib.parse
+import os
+from dotenv import load_dotenv
+load_dotenv()
 # Load environment variables and configure logging
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
 logger = logging.getLogger(__name__)
@@ -9,18 +12,22 @@ logger = logging.getLogger(__name__)
 # Initialize MCP server
 mcp = FastMCP("postgresql-server")
 
+def get_connection_uri():
+    dbhost = os.environ['DBHOST']
+    dbname = os.environ['DBNAME']
+    dbuser = urllib.parse.quote(os.environ['DBUSER'])
+    print(dbuser, urllib.parse.quote(os.environ['DBPASSWORD']))
+    password = os.environ['DBPASSWORD']
+    sslmode = os.environ['SSLMODE']
+    db_uri = f"host={dbhost} dbname={dbname} user={dbuser} password={password} sslmode={sslmode}"
+    return db_uri
+
 @mcp.tool(description="Retrieve a detailed overview of all tables and their columns in the connected PostgreSQL database. This tool returns the schema, including table names and each column's data type, to help users understand the database structure for query building, data exploration, or integration tasks.")
 def get_postgres_schema() -> str:
     """Retrieve schema of PostgreSQL database."""
     try:
-        conn = psycopg2.connect(
-            dbname="postgres",
-            user="document_ai",
-            password="Test_5525",
-            host="document-ai-pgsql-2025.postgres.database.azure.com",
-            port="5432",
-            sslmode="require"
-        )
+        conn_string = get_connection_uri()
+        conn = psycopg.connect(conn_string)
         cursor = conn.cursor()
         logger.info(f"Connected successfully")
         cursor.execute("SELECT table_name FROM information_schema.tables WHERE table_schema = 'public';")
@@ -48,14 +55,8 @@ def get_postgres_schema() -> str:
 def execute_postgres_query(query: str) -> str:
     """Execute a raw SQL SELECT query and return result as string."""
     try:
-        conn = psycopg2.connect(
-            dbname="postgres",
-            user="document_ai",
-            password="Test_5525",
-            host="document-ai-pgsql-2025.postgres.database.azure.com",
-            port="5432",
-            sslmode="require"
-        )
+        conn_string = get_connection_uri()
+        conn = psycopg.connect(conn_string)
         cursor = conn.cursor()
         cursor.execute(query)
         rows = cursor.fetchall()
