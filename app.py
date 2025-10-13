@@ -1,12 +1,8 @@
 from fastmcp import FastMCP
-from dotenv import load_dotenv
-import os
-import asyncio
 import psycopg2
 import logging 
  
 # Load environment variables and configure logging
-load_dotenv()
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
 logger = logging.getLogger(__name__)
 
